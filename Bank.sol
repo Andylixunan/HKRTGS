@@ -6,7 +6,6 @@ contract Bank {
     address[] private accounts;
     mapping (address=>uint) private accountBalances;
     CentralBank RTGS;
-    uint ownerFund;
 
     // this struct is for logging purpose only
     struct accountInfo{
@@ -58,7 +57,6 @@ contract Bank {
 
     constructor() payable initialFunding{
         owner = msg.sender;
-        ownerFund = msg.value;
     }
 
     function openAccount() public accountNumLimit accountNotExist{
@@ -100,34 +98,30 @@ contract Bank {
 
 
     function closeBank() public isOwner{
-        // payable(owner).transfer(5 ether);
-        uint ownerRefund = RTGS.withdrawAllFunds() + ownerFund;
-        payable(owner).transfer(ownerRefund);
         for (uint i = 0; i < accounts.length; i++){
             payable(accounts[i]).transfer(accountBalances[accounts[i]]);
         }
+        uint ownerRefund = address(this).balance;
+        payable(owner).transfer(ownerRefund);
     }
 
     // TODO: parameter checking
     function transfer(address receiver, address receiverBank, uint amount) public accountExists{
         // require(accountBalances[msg.sender] >= amount, "account balance not enough");
         accountBalances[msg.sender] -= amount;
-        ownerFund += amount;
         RTGS.transfer(receiverBank, amount);
         Bank recvBank = Bank(receiverBank);
-        recvBank.addBalanceAndDecrementOwnerFund(receiver, amount);
+        recvBank.addBalance(receiver, amount);
     }
 
     // maybe check with RTGS?
-    function addBalanceAndDecrementOwnerFund(address receiver, uint amount) external{
+    function addBalance(address receiver, uint amount) external{
         accountBalances[receiver] += amount;
-        ownerFund -= amount;
     }
 
     function registerRTGS(address centralBank) public{
         RTGS = CentralBank(centralBank);
         RTGS.openAccountAndDeposit();
-        ownerFund -= 3 ether;
     }
 }
 
@@ -136,6 +130,12 @@ contract Bank {
 contract CentralBank{
     address[] private accounts;
     mapping (address=>uint) private accountBalances;
+
+    struct accountInfo{
+        address account;
+        uint balance;
+    }
+    event LedgerLog(accountInfo[]);
 
     function openAccountAndDeposit() payable public {
         require(msg.value == 3 ether, "3 ether initial funding required");
@@ -150,9 +150,19 @@ contract CentralBank{
         return amount;
     }
 
-    function transfer(address toBank, uint amount) public{
+    function transfer(address toBank, uint amount) public {
         address fromBank = msg.sender;
         accountBalances[fromBank] -= amount;
         accountBalances[toBank] += amount;
     }
+
+    function ledgerRTGS() public {
+        uint len = accounts.length;
+        accountInfo[] memory arr = new accountInfo[](len);
+        for (uint i = 0; i < len; i++){
+            arr[i] = accountInfo(accounts[i], accountBalances[accounts[i]]);
+        }
+        emit LedgerLog(arr);
+    }
+    
 }
