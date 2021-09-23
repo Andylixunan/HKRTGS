@@ -122,7 +122,7 @@ contract Bank {
 
     function registerRTGS(address centralBank) public{
         RTGS = CentralBank(centralBank);
-        RTGS.openAccountAndDeposit();
+        RTGS.openAccountAndDeposit{value: 3 ether}();
     }
 }
 
