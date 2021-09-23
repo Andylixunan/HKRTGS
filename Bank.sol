@@ -98,6 +98,7 @@ contract Bank {
 
 
     function closeBank() public isOwner{
+        RTGS.withdrawAllFunds();
         for (uint i = 0; i < accounts.length; i++){
             payable(accounts[i]).transfer(accountBalances[accounts[i]]);
         }
@@ -105,16 +106,16 @@ contract Bank {
         payable(owner).transfer(ownerRefund);
     }
 
-    // TODO: parameter checking
     function transfer(address receiver, address receiverBank, uint amount) public accountExists{
-        // require(accountBalances[msg.sender] >= amount, "account balance not enough");
+        require(accountBalances[msg.sender] >= amount, "account balance not enough");
+        uint balanceAtRTGS = RTGS.balance();
+        require(balanceAtRTGS >= amount, "RTGS balance not enough");
         accountBalances[msg.sender] -= amount;
         RTGS.transfer(receiverBank, amount);
         Bank recvBank = Bank(receiverBank);
         recvBank.addBalance(receiver, amount);
     }
 
-    // maybe check with RTGS?
     function addBalance(address receiver, uint amount) external{
         accountBalances[receiver] += amount;
     }
@@ -143,17 +144,20 @@ contract CentralBank{
         accountBalances[msg.sender] += msg.value;
     }
 
-    function withdrawAllFunds() public returns (uint){
+    function withdrawAllFunds() public {
         uint amount = accountBalances[msg.sender];
         payable(msg.sender).transfer(amount);
         accountBalances[msg.sender] -= amount;
-        return amount;
     }
 
     function transfer(address toBank, uint amount) public {
         address fromBank = msg.sender;
         accountBalances[fromBank] -= amount;
         accountBalances[toBank] += amount;
+    }
+
+    function balance() public view returns (uint){
+        return accountBalances[msg.sender];
     }
 
     function ledgerRTGS() public {
