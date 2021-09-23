@@ -12,7 +12,6 @@ contract Bank {
         address account;
         uint balance;
     }
-    // accountInfo[] ledgerInfo;
 
     event AuditLog(address clientAddress, uint amount);
     event LedgerLog(accountInfo[]);
@@ -87,23 +86,17 @@ contract Bank {
             arr[i] = accountInfo(accounts[i], accountBalances[accounts[i]]);
         }
         emit LedgerLog(arr);
-
-        /*
-        for (uint i = 0; i < accounts.length; i++){
-            ledgerInfo.push(accountInfo(accounts[i], accountBalances[accounts[i]]));
-        }
-        emit LedgerLog(ledgerInfo);
-        */
     }
 
 
     function closeBank() public payable isOwner{
-        RTGS.withdrawAllFunds();
+        RTGS.withdrawAllFundsAndDeleteAccount();
         for (uint i = 0; i < accounts.length; i++){
             payable(accounts[i]).transfer(accountBalances[accounts[i]]);
         }
-        uint ownerRefund = address(this).balance;
-        payable(owner).transfer(ownerRefund);
+        // uint ownerRefund = address(this).balance;
+        // payable(owner).transfer(ownerRefund);
+        selfdestruct(payable(owner));
     }
 
     function transfer(address receiver, address receiverBank, uint amount) public accountExists{
@@ -144,10 +137,25 @@ contract CentralBank{
         accountBalances[msg.sender] += msg.value;
     }
 
-    function withdrawAllFunds() public {
+    function withdrawAllFundsAndDeleteAccount() public {
         uint amount = accountBalances[msg.sender];
         payable(msg.sender).transfer(amount);
         accountBalances[msg.sender] -= amount;
+        removeAccount(msg.sender);
+    }
+
+    function removeAccount(address accountToBeDel) private {
+        uint index;
+        for (uint i = 0; i < accounts.length; i++){
+            if(accounts[i] == accountToBeDel){
+                index = i;
+                break;
+            }
+        }
+        for (uint i = index; i < accounts.length-1; i++){
+            accounts[i] = accounts[i+1];
+        }
+        delete accounts[accounts.length-1];
     }
 
     function transfer(address toBank, uint amount) public {
