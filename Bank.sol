@@ -97,7 +97,7 @@ contract Bank {
     }
 
 
-    function closeBank() public isOwner{
+    function closeBank() public payable isOwner{
         RTGS.withdrawAllFunds();
         for (uint i = 0; i < accounts.length; i++){
             payable(accounts[i]).transfer(accountBalances[accounts[i]]);
