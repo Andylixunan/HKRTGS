@@ -31,6 +31,7 @@ contract Bank {
         for (uint i = 0; i < accounts.length; i++){
             if(msg.sender == accounts[i]){
                 flag = true;
+                break;
             }
         }
         require(flag == true, "account doesn't exist");
@@ -42,6 +43,7 @@ contract Bank {
         for (uint i = 0; i < accounts.length; i++){
             if(msg.sender == accounts[i]){
                 flag = false;
+                break;
             }
         }
         require(flag == true, "account already exists");
