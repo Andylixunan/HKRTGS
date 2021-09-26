@@ -107,7 +107,7 @@ contract Bank {
         require(balanceAtRTGS >= amount, "RTGS balance not enough");
         accountBalances[msg.sender] -= amount;
         RTGS.transfer(receiverBank, amount);
-        Bank recvBank = Bank(receiverBank);
+        Bank recvBank = Bank(payable(receiverBank));
         recvBank.addBalance(receiver, amount);
     }
 
@@ -119,6 +119,8 @@ contract Bank {
         RTGS = CentralBank(centralBank);
         RTGS.openAccountAndDeposit{value: 3 ether}();
     }
+
+    receive() external payable{}
 }
 
 
@@ -141,7 +143,13 @@ contract CentralBank{
 
     function withdrawAllFundsAndDeleteAccount() public {
         uint amount = accountBalances[msg.sender];
-        payable(msg.sender).transfer(amount);
+        /* 
+            address.transfer() set default gas limit for inter-contract transfer to be 2300 
+            but we clearly need more gas, 
+            so use address.call to transfer ether without pre-defined gas limit
+        */
+        (bool success, ) = payable(msg.sender).call{value:amount}("");
+        require(success, "withdrawAllFunds failed");
         accountBalances[msg.sender] -= amount;
         removeAccount(msg.sender);
     }
