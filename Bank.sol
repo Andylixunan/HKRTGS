@@ -129,8 +129,8 @@ contract CentralBank{
     /* 
         here we store the number of accounts instead of using accounts.length
         directly, since "delete" in solidity would only nullify the content instead 
-        of deletely it in the storage. For instance, delete address would make an
-        address "0x000000...".
+        of deleting it in the storage. For instance, "delete address" would make an
+        address become "0x000000...".
     */
     uint private accountNum;
 
