@@ -22,7 +22,7 @@ contract Bank {
     }
 
     modifier initialFunding{
-        require(msg.value == 5 ether, "5 ether initial funding required");
+        require(msg.value >= 5 ether, "initial funding no less than 5 ether is required");
         _;
     }
 
