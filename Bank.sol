@@ -195,19 +195,20 @@ contract CentralBank{
     // remove the account in RTGS bank for a specified normal bank
     function removeAccount(address accountToBeDel) private {
         uint index;
+        uint len = accountNum;
         // find the account by its address
-        for (uint i = 0; i < accounts.length; i++){
+        for (uint i = 0; i < len; i++){
             if(accounts[i] == accountToBeDel){
                 index = i;
                 break;
             }
         }
         // move elements after it one step forward
-        for (uint i = index; i < accounts.length-1; i++){
+        for (uint i = index; i < len-1; i++){
             accounts[i] = accounts[i+1];
         }
         // delete the last element and update the number of accounts
-        delete accounts[accounts.length-1];
+        delete accounts[len-1];
         accountNum--;
     }
 
