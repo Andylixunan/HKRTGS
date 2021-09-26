@@ -96,8 +96,6 @@ contract Bank {
         for (uint i = 0; i < accounts.length; i++){
             payable(accounts[i]).transfer(accountBalances[accounts[i]]);
         }
-        // uint ownerRefund = address(this).balance;
-        // payable(owner).transfer(ownerRefund);
         selfdestruct(payable(owner));
     }
 
@@ -128,6 +126,13 @@ contract Bank {
 contract CentralBank{
     address[] private accounts;
     mapping (address=>uint) private accountBalances;
+    /* 
+        here we store the number of accounts instead of using accounts.length
+        directly, since "delete" in solidity would only nullify the content instead 
+        of deletely it in the storage. For instance, delete address would make an
+        address "0x000000...".
+    */
+    uint private accountNum;
 
     struct accountInfo{
         address account;
@@ -139,14 +144,14 @@ contract CentralBank{
         require(msg.value == 3 ether, "3 ether initial funding required");
         accounts.push(msg.sender);
         accountBalances[msg.sender] += msg.value;
+        accountNum++;
     }
 
     function withdrawAllFundsAndDeleteAccount() public {
         uint amount = accountBalances[msg.sender];
         /* 
             address.transfer() set default gas limit for inter-contract transfer to be 2300 
-            but we clearly need more gas, 
-            so use address.call to transfer ether without pre-defined gas limit
+            but we clearly need more gas, so use address.call to transfer ether without pre-defined gas limit
         */
         (bool success, ) = payable(msg.sender).call{value:amount}("");
         require(success, "withdrawAllFunds failed");
@@ -166,6 +171,7 @@ contract CentralBank{
             accounts[i] = accounts[i+1];
         }
         delete accounts[accounts.length-1];
+        accountNum--;
     }
 
     function transfer(address toBank, uint amount) public {
@@ -179,7 +185,7 @@ contract CentralBank{
     }
 
     function ledgerRTGS() public {
-        uint len = accounts.length;
+        uint len = accountNum;
         accountInfo[] memory arr = new accountInfo[](len);
         for (uint i = 0; i < len; i++){
             arr[i] = accountInfo(accounts[i], accountBalances[accounts[i]]);
