@@ -144,7 +144,7 @@ contract Bank {
         RTGS.openAccountAndDeposit{value: 3 ether}();
     }
 
-    // built-in function, adding this would allow the contract to receive money(ether).
+    // built-in function, adding this would allow the contract to receive money(ether) from other contracts
     receive() external payable{}
 }
 
