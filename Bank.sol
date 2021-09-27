@@ -172,7 +172,10 @@ contract CentralBank{
     // open an account for normal bank and make initial deposit of 3 ether
     function openAccountAndDeposit() payable public {
         require(msg.value == 3 ether, "3 ether initial funding required");
-        accounts.push(msg.sender);
+        if (accountNum == accounts.length)
+            accounts.push(msg.sender);
+        else
+            accounts[accountNum] = msg.sender;
         accountBalances[msg.sender] += msg.value;
         accountNum++;
     }
